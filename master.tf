@@ -4,6 +4,23 @@ resource "aws_instance" "foo" {
   instance_type          = "t2.medium"
   key_name               = aws_key_pair.deployer.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
+
+connection {
+    type     = "ssh"
+    user     = "ubuntu"  # Replace with your actual username
+    private_key = "${file("/root/tf-k8s-aws-setup/pkey")}"  # Replace with your SSH private key
+    host = self.public_ip
+    script_path = "/tmp/tf-k8s-aws-setup/msetup.sh"
+  }
+
+  provisioner "remote-exec" {
+    script = "/root/tf-k8s-aws-setup/msetup.sh"
+    # Path to your local shell script, relative or absolute
+   # inline = [
+    #  "/root/tf-k8s-aws-setup/msetup.sh"
+    #]
+  }
+
   tags = {
     Name = "K8s-Master"
   }
