@@ -1,6 +1,6 @@
 #!/bin/bash
-sudo ip=$(hostname -i |cut -c 11-14)
-sudo hostnamectl set-hostname k8s-worker-$ip
+#sudo ip=$(hostname -i |cut -c 11-14)
+#sudo hostnamectl set-hostname k8s-worker-$ip
 ##### Disable Firewall
 sudo ufw disable
 ##### Disable swap
