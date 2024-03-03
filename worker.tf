@@ -4,21 +4,24 @@ resource "aws_instance" "bar" {
   instance_type          = "t2.medium"
   key_name               = aws_key_pair.deployer.id
   vpc_security_group_ids = [aws_security_group.my_sg.id]
-  count                  = 2
+#  count                  = 2
   tags = {
     Name = "K8s-Worker"
   }
 
 }
 
+
+
 resource "null_resource" "wsetup" {
   depends_on = [aws_instance.bar]
-  count = 2
+#  count      = 2
   connection {
     type        = "ssh"
     user        = "ubuntu"
-    timeout     = "8m"
-    host        = aws_instance.bar[count.index].public_ip
+    timeout     = "15m"
+#    host        = aws_instance.bar[count.index].public_ip
+     host        = aws_instance.bar.public_ip
     private_key = file("./pkey")
   }
   provisioner "file" {
@@ -33,3 +36,5 @@ resource "null_resource" "wsetup" {
     ]
   }
 }
+
+

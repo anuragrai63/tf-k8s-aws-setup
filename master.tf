@@ -17,7 +17,7 @@ resource "null_resource" "msetup" {
   connection {
     type        = "ssh"
     user        = "ubuntu"
-    timeout     = "8m"
+    timeout     = "12m"
     host        = aws_instance.foo.public_ip
     private_key = file("./pkey")
   }
