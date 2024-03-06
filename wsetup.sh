@@ -1,36 +1,63 @@
 #!/bin/bash
-#sudo ip=$(hostname -i |cut -c 11-14)
-#sudo hostnamectl set-hostname k8s-worker-$ip
-##### Disable Firewall
-sudo ufw disable
-##### Disable swap
-sudo swapoff -a 
-sudo sed -i '/swap/d' /etc/fstab
-##### Update sysctl settings for Kubernetes networking
-sudo cat >>/etc/sysctl.d/kubernetes.conf<<EOF
+###############Tested Steps:-
+sudo apt update
+sudo apt install docker.io -y
+sudo systemctl enable docker
+sudo systemctl start docker
+
+##############Install Kubernetes###########################
+sudo apt-get install -y apt-transport-https ca-certificates curl gpg
+sudo mkdir -p -m 755 /etc/apt/keyrings
+curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+echo 'deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /' | sudo tee /etc/apt/sources.list.d/kubernetes.list
+sudo apt-get update
+sudo apt-get install -y kubelet kubeadm kubectl
+sudo apt-mark hold kubelet kubeadm kubectl
+
+##########################Prepare for Kubernetes Deployment#################################
+sudo swapoff -a
+sudo sed -i '/ swap / s/^\(.*\)$/#\1/g' /etc/fstab
+
+
+cat >>/etc/modules-load.d/containerd.conf<<EOF
+overlay
+br_netfilter
+EOF
+
+sudo modprobe overlay
+sudo modprobe br_netfilter
+
+cat >>/etc/sysctl.d/kubernetes.conf<<EOF
 net.bridge.bridge-nf-call-ip6tables = 1
 net.bridge.bridge-nf-call-iptables = 1
+net.ipv4.ip_forward = 1
 EOF
-sudo sysctl --system
-##### Install docker engine
+sysctl --system
+
+sudo hostnamectl set-hostname worker02
+
+cat >>/etc/default/kubelet<<EOF
+KUBELET_EXTRA_ARGS="--cgroup-driver=cgroupfs"
+EOF
+
+sudo systemctl daemon-reload && sudo systemctl restart kubelet
+
+cat >>/etc/docker/daemon.json<<EOF
 {
-  sudo apt install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
-  sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
-  sudo apt update
-  sudo apt install -y docker-ce=5:19.03.10~3-0~ubuntu-focal containerd.io
-}
-### Kubernetes Setup
-{
- sudo  curl -s https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
- sudo  echo "deb https://apt.kubernetes.io/ kubernetes-xenial main" > /etc/apt/sources.list.d/kubernetes.list
-}
-sudo apt update && apt install -y kubeadm=1.18.5-00 kubelet=1.18.5-00 kubectl=1.18.5-00
-##### In case you are using LXC containers for Kubernetes nodes
-{
- sudo  mknod /dev/kmsg c 1 11
-  sudo echo '#!/bin/sh -e' >> /etc/rc.local
-  sudo echo 'mknod /dev/kmsg c 1 11' >> /etc/rc.local
-  sudo chmod +x /etc/rc.local
-}
+      "exec-opts": ["native.cgroupdriver=systemd"],
+      "log-driver": "json-file",
+      "log-opts": {
+      "max-size": "100m"
+   },
+       "storage-driver": "overlay2"
+       }
+EOF
+
+sudo systemctl daemon-reload && sudo systemctl restart docker
+
+sudo systemctl stop apparmor && sudo systemctl disable apparmor
+sudo systemctl restart containerd.service
+
+echo " Worker Node Setup Done"
+
 
