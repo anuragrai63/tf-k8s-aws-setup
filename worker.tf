@@ -1,5 +1,5 @@
 resource "aws_instance" "bar" {
-  ami                    = "ami-0cd59ecaf368e5ccf" # us-east-1 Ubuntu 20.04
+  ami                    = "ami-07d9b9ddc6cd8dd30" # us-east-1 Ubuntu 22.04
   subnet_id              = aws_subnet.my_subnet.id
   instance_type          = "t2.medium"
   key_name               = aws_key_pair.deployer.id
