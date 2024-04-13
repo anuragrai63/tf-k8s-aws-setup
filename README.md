@@ -20,3 +20,6 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 kubectl get nodes
 # Get component status
 kubectl get cs
+
+
+
