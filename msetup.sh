@@ -56,14 +56,16 @@ EOF
 
 sudo systemctl daemon-reload && sudo systemctl restart docker
 
-sudo kubeadm init --control-plane-endpoint=master-node --upload-certs
+#sudo kubeadm init --control-plane-endpoint=master-node --upload-certs
+kubeadm init --pod-network-cidr=10.244.0.0/16
+
 mkdir -p $HOME/.kube
 sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
 sudo chown $(id -u):$(id -g) $HOME/.kube/config
 
 ############Deploy Pod Network to Cluster#############################
 kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml
-kubectl taint nodes --all node-role.kubernetes.io/control-plane-
+#kubectl taint nodes --all node-role.kubernetes.io/control-plane-
 
 
 echo " Master Node Setup"
